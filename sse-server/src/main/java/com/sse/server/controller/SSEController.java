@@ -2,6 +2,7 @@ package com.sse.server.controller;
 
 import com.sse.common.model.EventType;
 import com.sse.common.model.SSEEventData;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/sse")
+@Log4j2
 public class SSEController {
     private final Sinks.Many<SSEEventData> sseEventSink = Sinks.many().replay().limit(1);
 
@@ -24,7 +26,11 @@ public class SSEController {
     }
 
     @Scheduled(fixedRate = 10 * 1000)
-    public void emitEvent(){
-        sseEventSink.tryEmitNext(SSEEventData.builder().event(EventType.ALERT).generatedAt(LocalDateTime.now()).uuid(UUID.randomUUID().toString()).build());
+    public void emitEvent() {
+        if (sseEventSink.tryEmitNext(SSEEventData.builder().event(EventType.ALERT).generatedAt(LocalDateTime.now()).uuid(UUID.randomUUID().toString()).build()) == Sinks.EmitResult.OK) {
+            log.info("Event emitted");
+        } else {
+            log.error("Event emitting failed");
+        }
     }
 }
