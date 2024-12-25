@@ -1,40 +1,23 @@
 package com.sse.client1.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.sse.common.model.SSEEventData;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
-import reactor.util.retry.Retry;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
+import static com.sse.common.model.ObjectMapperUtil.objectMapper;
 
 @Service
 @Log4j2
 public class EventConsumer {
 
-    @PostConstruct
-    public void consumeEvent() {
-        WebClient
-                .builder()
-                .clientConnector(new ReactorClientHttpConnector())
-                .baseUrl("http://localhost:8080/sse/server")
-                .build()
-                .get()
-                .uri("/sse/event")
-                .accept(MediaType.TEXT_EVENT_STREAM)
-                .header(HttpHeaders.AUTHORIZATION, "Bearer ABCD")
-                .retrieve()
-                .bodyToFlux(SSEEventData.class)
-                .doOnSubscribe(subscription -> log.info("Event subscribed"))
-                .retryWhen(Retry.backoff(5, Duration.of(10, ChronoUnit.SECONDS))
-                        .doBeforeRetry(retrySignal -> log.warn("Retrying connection attempt {}", retrySignal.totalRetries())))
-                .subscribe(sseEventData -> log.info("Event data received with payload {}", sseEventData),
-                        throwable -> log.error("Error occurred {}", throwable.getMessage()),
-                        () -> log.info("Subscription event completed"));
+    @KafkaListener(topics = "sse-event", groupId = "consumer-group1")
+    public void consumeSensorData(@Payload String sseEventData,
+                                  @Header(KafkaHeaders.RECEIVED_PARTITION) int partition) throws JsonProcessingException {
+        log.info("Event received as payload {}", objectMapper.readValue(sseEventData, SSEEventData.class));
     }
 }
