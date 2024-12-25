@@ -5,8 +5,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -14,5 +12,5 @@ import java.time.LocalDateTime;
 public class SSEEventData {
     private String uuid;
     private EventType event;
-    private LocalDateTime generatedAt;
+    private String generatedAt;
 }

@@ -1,5 +1,5 @@
 package com.sse.common.model;
 
 public enum EventType {
-    ALERT,ERROR
+    ALERT,ERROR,ACK
 }
