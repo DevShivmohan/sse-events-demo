@@ -33,7 +33,7 @@ public class SSEController {
         kafkaTemplate.send("sse-event", objectMapper.writeValueAsString(eventPayload))
                 .whenComplete((stringStringSendResult, throwable) -> {
                     if (Objects.isNull(throwable)) {
-                        log.info("SSE Event generated and sent {}", stringStringSendResult.getRecordMetadata());
+                        log.info("SSE Event generated and sent {}", stringStringSendResult.getProducerRecord().value());
                     } else {
                         log.error("Error occurred during event sending {}", throwable.getMessage());
                     }
